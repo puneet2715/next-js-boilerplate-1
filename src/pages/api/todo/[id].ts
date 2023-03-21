@@ -1,48 +1,37 @@
 import connectDB from "@/database/db";
-import todoCol from "@/database/todoCol";
-import mongoose from "mongoose";
+import { Types } from "mongoose";
+import { deleteTodoById, getTodoById, updateTodoById } from "@/services/api.service";
 import { NextApiRequest, NextApiResponse } from "next";
-
-const checkValidId = (id: string)=>{
-    if(mongoose.Types.ObjectId.isValid(id)){
-        if((String)(new mongoose.Types.ObjectId(id)) === id)
-            return true;
-        return false;
-    }
-    return false;
-}
+import { isIdValid } from "@/utils/checks";
 
 export default async function app(req: NextApiRequest, res: NextApiResponse) {
     await connectDB();
-    let id = req.query.id!;
-    id = id.toString();
-    if ( !checkValidId(id) ){
-        res.status(406).send({message:"id length is not as per mongoose objectID"})
-        return
-    }
-
-    const _id = new mongoose.Types.ObjectId(id);
-    const todoData = await todoCol.findById({_id})
-    if ( !todoData ){
-        res.status(404).send({message:"Data with given id not found!"})
-        return;
-    }
-    
     try {
-        if ( req.method === 'GET' ){
-            res.status(200).send(todoData);
+        let id = req.query.id!.toString()
+        if ( ! await isIdValid(id) ){
+            res.status(404).send({message:"Todo Data with given id cannot be found!"})
+            return;
         }
-        else if ( req.method === 'PUT' ){
-            await todoCol.findOneAndUpdate({_id},req.body,{new:false});
-            res.status(204).end();
-        }
-        else if ( req.method === "DELETE" ){
-            await todoCol.deleteOne({_id});
-            res.status(200).send({
-                message:"Data deleted succesfully!"
-            })
+        const _id = new Types.ObjectId(id)
+
+        switch ( req.method ){
+            case "GET": 
+                await getTodoById(req, res, _id)
+                break;
+
+            case "PUT": 
+                await updateTodoById(req, res, _id)
+                break;
+
+            case "DELETE": 
+                await deleteTodoById(req, res, _id)
+                break;
+
+            default:
+                res.status(404).send({message:"Request Method Not found"})
+                break;
         }
     } catch (err) {
-        res.status(400).send((err as Error).message);
+        res.status(400).send({message: (err as Error).message});
     }
 }

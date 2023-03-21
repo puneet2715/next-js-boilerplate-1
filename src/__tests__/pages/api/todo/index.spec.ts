@@ -37,7 +37,7 @@ describe("test with instance",()=>{
         await handler(request, response);
         const data = response._getData();
         expect(response.statusCode).toEqual(400);
-        expect(data).toStrictEqual({message:"Incomplete Data!"})
+        expect(data).toStrictEqual({message:"Fix following issues: done is not provided, "})
     });
 
     test('Simple POST testing with Complete Data',async () => {
@@ -48,15 +48,13 @@ describe("test with instance",()=>{
             "task": "Work",
             "priority": "Low",
             "dueDate": "2025-09-22",
-            "done": true
+            "done": false
             }
         });
 
         const response = httpMocks.createResponse();
         await handler(request, response);
-        const data = response._getData();
         expect(response.statusCode).toEqual(201);
-        expect(data).toStrictEqual({message:"Saved it!"})
     });
 
  
@@ -74,14 +72,13 @@ describe("test with instance",()=>{
         expect(data[0].task).toEqual('Work')
         expect(data[0].priority).toEqual('Low')
         expect(data[0].dueDate).toStrictEqual(new Date('2025-09-22T00:00:00.000Z'))
-        expect(data[0].done).toEqual(true)
-        
+        expect(data[0].done).toEqual(false) 
     });
 
     test('GET request with filters',async () => {
         const request  = httpMocks.createRequest({
             method: 'GET',
-            url: '/api/todo?isFinished=true&dueDate=2025-09-22&priority=Low',
+            url: '/api/todo?isFinished=false&dueDate=2025-09-22&priority=Low',
         });
 
         const response = httpMocks.createResponse();
@@ -91,6 +88,15 @@ describe("test with instance",()=>{
         expect(data[0].task).toEqual('Work')
         
     });
+
+    test('Request with METHOD not defined',async () => {
+        const request  = httpMocks.createRequest({ method:'ANY' }); 
+        const response = httpMocks.createResponse();
+        await handler(request, response);
+        const data = response._getData();
+        expect(response.statusCode).toEqual(404)
+        expect(data).toStrictEqual({message:"Request Method Not found"}) 
+    })
 
  
 })

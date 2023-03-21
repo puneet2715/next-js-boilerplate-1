@@ -20,8 +20,8 @@ describe("Testing with id route path",()=>{
             body:{
                 "task": "API",
                 "priority": "High",
-                "dueDate": "2022-10-08",
-                "done": true
+                "dueDate": "2025-10-08",
+                "done": false
             }
         });
         let response = httpMocks.createResponse();
@@ -51,8 +51,8 @@ describe("Testing with id route path",()=>{
             const response = httpMocks.createResponse();
             await app(request, response);
             const data = response._getData();
-            expect(response.statusCode).toEqual(406)
-            expect(data).toStrictEqual({message:"id length is not as per mongoose objectID"})    
+            expect(response.statusCode).toEqual(404)
+            expect(data).toStrictEqual({message:"Todo Data with given id cannot be found!"})    
         })
         test('GET/PUT/DELETE request with _id not present',async ()=>{
                 let id = String(new mongoose.Types.ObjectId());
@@ -61,7 +61,15 @@ describe("Testing with id route path",()=>{
                 await app(request, response);
                 const data = response._getData();
                 expect(response.statusCode).toEqual(404)
-                expect(data).toStrictEqual({message:"Data with given id not found!"})      
+                expect(data).toStrictEqual({message:"Todo Data with given id cannot be found!"})      
+        })
+        test('Request with METHOD not defined',async () => {
+            const request  = httpMocks.createRequest({ method:'ANY', query:{id} }); 
+            const response = httpMocks.createResponse();
+            await app(request, response);
+            const data = response._getData();
+            expect(response.statusCode).toEqual(404)
+            expect(data).toStrictEqual({message:"Request Method Not found"}) 
         })
     })
 
@@ -90,7 +98,7 @@ describe("Testing with id route path",()=>{
             });
             const response = httpMocks.createResponse();
             await app(request, response);
-            expect(response.statusCode).toEqual(204) 
+            expect(response.statusCode).toEqual(200) 
         })
     })
 

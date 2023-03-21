@@ -1,38 +1,25 @@
-import { NextApiRequest, NextApiResponse } from "next";
 import connectDB from "@/database/db";
-import todoCol from "@/database/todoCol";
+import { NextApiRequest, NextApiResponse } from "next";
+import { getAllTodoData, postTodoData } from "@/services/api.service";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     await connectDB();
     try {
-        if (req.method === "GET") {
-            const filters = JSON.parse(JSON.stringify({
-                ...(req.query.priority !== undefined) && {priority:req.query.priority},
-                ...(req.query.isFinished !== undefined) && {done:req.query.isFinished},
-                ...(req.query.dueDate !== undefined) && {dueDate:{$lte:req.query.dueDate}}
-            }))
-            const todoData = await todoCol.find(filters).exec();
-            if ( todoData.length === 0 )
-                res.status(200).send([])
-            else
-                res.status(200).send(todoData)
-        }
-        else if ( req.method === "POST" ){
-            const{
-                task,
-                priority,
-                dueDate,
-                done} = req.body;
-            if ( !task || !priority || !dueDate || done === undefined ){
-                res.status(400).send({message:"Incomplete Data!"})
-                return;
-            }
-            const todoData = new todoCol({task, priority, dueDate , done});
-            await todoData.save();
-            res.status(201).send({message:"Saved it!"})
+        switch( req.method ){
+            case "GET": 
+                await getAllTodoData(req,res)
+                break;
+            
+            case "POST": 
+                await postTodoData(req,res)
+                break;
+        
+            default:
+                res.status(404).send({message:"Request Method Not found"})
+                break;
         }
     }catch (err) {
-        res.status(400).send((err as Error).message);
+        res.status(400).send({message:(err as Error).message});
     }
 }
 
